@@ -1,0 +1,36 @@
+[Unit]
+Description={{ .Description }}
+{{- range .After }}
+After={{ . }}
+{{- end }}
+{{- range .Wants }}
+Wants={{ . }}
+{{- end }}
+{{- range .Requires }}
+Requires={{ . }}
+{{- end }}
+
+[Service]
+Type={{ if .OneShot }}oneshot{{ else }}simple{{ end }}
+{{- if .WorkDir }}
+WorkingDirectory={{ .WorkDir }}
+{{- end }}
+ExecStart={{ .ExecStart }}
+{{- range $k, $v := .Env }}
+Environment="{{ $k }}={{ $v }}"
+{{- end }}
+{{- if .Restart }}
+Restart={{ .Restart }}
+{{- end }}
+{{- if .RestartSec }}
+RestartSec={{ .RestartSec }}
+{{- end }}
+{{- if .Timeout }}
+TimeoutStartSec={{ .Timeout }}
+{{- end }}
+{{- if .User }}
+User={{ .User }}
+{{- end }}
+
+[Install]
+WantedBy={{ if .UserMode }}default.target{{ else }}multi-user.target{{ end }}

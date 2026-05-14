@@ -1,0 +1,33 @@
+jobs:
+  backup:
+    command: "/home/tim/scripts/backup.sh"
+    workdir: "/home/tim/scripts"
+    schedule: "hourly"
+    description: "Backup task"
+    persistent: true
+
+  sync:
+    command: "go"
+    args: ["run", "sync.go"]
+    workdir: "/home/tim/projects/sync"
+    schedule: "*/5 * * * *"
+    description: "Sync data to remote"
+    env:
+      APP_ENV: production
+      TOKEN: abc123
+
+  cleanup:
+    command: "/usr/local/bin/cleanup.sh"
+    schedule: "0 3 * * *"
+    description: "Nightly cleanup at 03:00"
+    restart: "on-failure"
+    restart_sec: "30"
+    timeout: "120"
+
+  weekly_report:
+    command: "/home/tim/scripts/report.py"
+    schedule: "0 9 * * 1"
+    description: "Weekly report — every Monday at 09:00"
+    user: "tim"
+    env:
+      REPORT_EMAIL: admin@example.com
