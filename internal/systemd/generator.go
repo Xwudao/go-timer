@@ -172,10 +172,10 @@ func (g *Generator) Install(name string, job *config.JobConfig, unitDir string, 
 		return nil, fmt.Errorf("creating unit directory %s: %w", unitDir, err)
 	}
 
-	if err := os.WriteFile(filepath.Join(unitDir, pair.ServiceName), []byte(pair.Service), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(unitDir, pair.ServiceName), []byte(pair.Service), 0o644); err != nil { //nolint:gosec // systemd unit files must be world-readable
 		return nil, fmt.Errorf("writing service unit: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(unitDir, pair.TimerName), []byte(pair.Timer), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(unitDir, pair.TimerName), []byte(pair.Timer), 0o644); err != nil { //nolint:gosec // systemd unit files must be world-readable
 		return nil, fmt.Errorf("writing timer unit: %w", err)
 	}
 
@@ -199,7 +199,7 @@ func (g *Generator) InstallIfChanged(name string, job *config.JobConfig, unitDir
 
 	svcPath := filepath.Join(unitDir, pair.ServiceName)
 	if unitFileChanged(svcPath, pair.Service) {
-		if err := os.WriteFile(svcPath, []byte(pair.Service), 0o644); err != nil {
+		if err := os.WriteFile(svcPath, []byte(pair.Service), 0o644); err != nil { //nolint:gosec // systemd unit files must be world-readable
 			return false, fmt.Errorf("writing service unit: %w", err)
 		}
 		changed = true
@@ -207,7 +207,7 @@ func (g *Generator) InstallIfChanged(name string, job *config.JobConfig, unitDir
 
 	tmrPath := filepath.Join(unitDir, pair.TimerName)
 	if unitFileChanged(tmrPath, pair.Timer) {
-		if err := os.WriteFile(tmrPath, []byte(pair.Timer), 0o644); err != nil {
+		if err := os.WriteFile(tmrPath, []byte(pair.Timer), 0o644); err != nil { //nolint:gosec // systemd unit files must be world-readable
 			return false, fmt.Errorf("writing timer unit: %w", err)
 		}
 		changed = true

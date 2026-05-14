@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -155,16 +153,6 @@ func sanitiseName(s string) string {
 		}
 	}
 	return out.String()
-}
-
-// readLine reads a single line from stdin (used for env var prompts).
-func readLine(prompt string) string {
-	fmt.Print(prompt)
-	scanner := bufio.NewScanner(os.Stdin)
-	if scanner.Scan() {
-		return strings.TrimSpace(scanner.Text())
-	}
-	return ""
 }
 
 func init() {

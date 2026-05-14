@@ -118,7 +118,7 @@ func Prompt(label, defaultVal string) string {
 		fmt.Fprint(os.Stdout, accentColor.Sprint("? ")+label+": ")
 	}
 	var input string
-	fmt.Scanln(&input)
+	_, _ = fmt.Scanln(&input)
 	if input == "" {
 		return defaultVal
 	}
@@ -130,7 +130,7 @@ func PromptRequired(label string) (string, error) {
 	for {
 		fmt.Fprint(os.Stdout, accentColor.Sprint("? ")+label+warnColor.Sprint(" (required)")+": ")
 		var input string
-		fmt.Scanln(&input)
+		_, _ = fmt.Scanln(&input)
 		input = strings.TrimSpace(input)
 		if input != "" {
 			return input, nil
@@ -147,7 +147,7 @@ func Confirm(label string, defaultYes bool) bool {
 	}
 	fmt.Fprint(os.Stdout, accentColor.Sprint("? ")+label+" "+dimColor.Sprint(hint)+": ")
 	var input string
-	fmt.Scanln(&input)
+	_, _ = fmt.Scanln(&input)
 	input = strings.TrimSpace(strings.ToLower(input))
 	if input == "" {
 		return defaultYes

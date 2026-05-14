@@ -84,7 +84,7 @@ Press Ctrl+C to stop the daemon.`,
 		if err != nil {
 			return fmt.Errorf("starting watcher: %w", err)
 		}
-		defer w.Stop()
+		defer func() { _ = w.Stop() }()
 
 		ui.Info("daemon watching %s", cfgDir)
 		ui.Dim("  mode  : %s", modeLabel())

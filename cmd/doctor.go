@@ -210,19 +210,6 @@ func currentUsername() (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-// loadConfigSilent loads the config without printing errors (used in doctor).
-func loadConfigSilent() (*struct{ Jobs map[string]any }, error) {
-	cfg, err := loadConfigErr()
-	if err != nil {
-		return nil, err
-	}
-	jobs := make(map[string]any)
-	for k := range cfg.Jobs {
-		jobs[k] = struct{}{}
-	}
-	return &struct{ Jobs map[string]any }{Jobs: jobs}, nil
-}
-
 func fileReadable(path string) bool {
 	f, err := os.Open(filepath.Clean(path))
 	if err != nil {

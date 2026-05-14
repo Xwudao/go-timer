@@ -51,12 +51,12 @@ var exportCmd = &cobra.Command{
 			svcPath := filepath.Join(dest, pair.ServiceName)
 			tmrPath := filepath.Join(dest, pair.TimerName)
 
-			if err := os.WriteFile(svcPath, []byte(pair.Service), 0o644); err != nil {
+			if err := os.WriteFile(svcPath, []byte(pair.Service), 0o644); err != nil { //nolint:gosec // systemd unit files must be world-readable
 				ui.Error("writing %s: %v", pair.ServiceName, err)
 				errs++
 				continue
 			}
-			if err := os.WriteFile(tmrPath, []byte(pair.Timer), 0o644); err != nil {
+			if err := os.WriteFile(tmrPath, []byte(pair.Timer), 0o644); err != nil { //nolint:gosec // systemd unit files must be world-readable
 				ui.Error("writing %s: %v", pair.TimerName, err)
 				errs++
 				continue

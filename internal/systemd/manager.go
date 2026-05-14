@@ -449,7 +449,7 @@ func parseUSecTime(s string) (time.Time, bool) {
 	if err != nil || us == 0 {
 		return time.Time{}, false
 	}
-	return time.Unix(int64(us/1_000_000), int64(us%1_000_000)*1000).Local(), true
+	return time.Unix(int64(us/1_000_000), int64(us%1_000_000)*1000).Local(), true //nolint:gosec // timestamp values cannot realistically overflow int64
 }
 
 // IsUserModeAvailable reports whether systemctl --user works.

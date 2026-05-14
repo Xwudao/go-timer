@@ -7,12 +7,12 @@ import (
 
 // Error codes
 const (
-	CodeNotFound      = 1
-	CodeAlreadyExists = 2
-	CodeSystemd       = 3
-	CodeConfig        = 4
-	CodePermission    = 5
-	CodeInvalidInput  = 6
+	CodeNotFound       = 1
+	CodeAlreadyExists  = 2
+	CodeSystemd        = 3
+	CodeConfig         = 4
+	CodePermission     = 5
+	CodeInvalidInput   = 6
 	CodeNotInitialized = 7
 )
 
