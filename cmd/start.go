@@ -40,17 +40,9 @@ If the job is already registered, the name or filename both work:
 		// yet, auto-register it so the user never has to run "timerd add".
 		if looksLikeFilePath(arg) {
 			if _, err := cfg.GetJob(name); err != nil {
-				absPath, absErr := filepath.Abs(arg)
-				if absErr != nil {
-					absPath = arg
-				}
-				sched := startSchedule
-				if sched == "" {
-					sched = "daily"
-				}
-				newJob := &config.JobConfig{
-					Command:  absPath,
-					Schedule: sched,
+				newJob, err := newAutoRegisteredJob(arg, startSchedule)
+				if err != nil {
+					return fmt.Errorf("auto-registering job %q: %w", name, err)
 				}
 				if err := cfg.AddJob(name, newJob); err != nil {
 					return fmt.Errorf("auto-registering job %q: %w", name, err)
@@ -58,7 +50,7 @@ If the job is already registered, the name or filename both work:
 				if !saveConfig(cfg) {
 					return fmt.Errorf("failed to save config")
 				}
-				ui.Info("registered job %q → %s (schedule: %s)", name, absPath, sched)
+				ui.Info("registered job %q → %s (schedule: %s)", name, newJob.Command, newJob.Schedule)
 			}
 		}
 
@@ -88,6 +80,23 @@ If the job is already registered, the name or filename both work:
 		ui.Success("timer %q started", name)
 		return nil
 	},
+}
+
+func newAutoRegisteredJob(arg, schedule string) (*config.JobConfig, error) {
+	absPath, err := filepath.Abs(arg)
+	if err != nil {
+		return nil, fmt.Errorf("resolving path %q: %w", arg, err)
+	}
+
+	if schedule == "" {
+		schedule = "daily"
+	}
+
+	return &config.JobConfig{
+		Command:  absPath,
+		WorkDir:  filepath.Dir(absPath),
+		Schedule: schedule,
+	}, nil
 }
 
 func init() {
