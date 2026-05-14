@@ -21,7 +21,7 @@ var inspectCmd = &cobra.Command{
   - Live systemd status and key properties
   - Recent journal logs`,
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		name := resolveJobName(args[0])
 
 		cfg, ok := loadConfig()
@@ -124,7 +124,7 @@ var inspectCmd = &cobra.Command{
 		c := exec.Command("journalctl", jArgs...) //nolint:gosec
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
-		c.Run() //nolint:errcheck
+		_ = c.Run()
 
 		return nil
 	},

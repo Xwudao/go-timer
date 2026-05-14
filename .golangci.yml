@@ -6,28 +6,37 @@ run:
 linters:
   enable:
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
     - unused
-    - gofmt
-    - goimports
     - misspell
     - revive
     - gosec
     - noctx
     - bodyclose
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
   settings:
     goimports:
-      local-prefixes: github.com/Xwudao/go-timer
-    revive:
-      rules:
-        - name: exported
-          severity: warning
-    gosec:
-      excludes:
-        - G204 # Subprocess launched with variable (intentional — we wrap systemctl)
+      local-prefixes:
+        - github.com/Xwudao/go-timer
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+
+  gosec:
+    excludes:
+      - G204
+      - G304
+      - G301
 
 issues:
   exclusions:

@@ -16,7 +16,7 @@ Only files whose content actually changed are rewritten. systemctl
 daemon-reload is called only when at least one file changed, and only
 active timers for modified jobs are restarted.`,
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		cfg, ok := loadConfig()
 		if !ok {
 			return fmt.Errorf("could not load config")

@@ -51,7 +51,7 @@ func NewConfig() *Config {
 
 // Load reads and parses a config file.
 func Load(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("config file not found at %s: run 'timerd init' first", path)
@@ -73,7 +73,7 @@ func Load(path string) (*Config, error) {
 
 // Save writes the config to disk, creating parent directories if needed.
 func Save(path string, cfg *Config) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return fmt.Errorf("creating config directory: %w", err)
 	}
 

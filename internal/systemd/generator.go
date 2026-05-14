@@ -168,7 +168,7 @@ func (g *Generator) Install(name string, job *config.JobConfig, unitDir string, 
 		return nil, err
 	}
 
-	if err := os.MkdirAll(unitDir, 0o755); err != nil {
+	if err := os.MkdirAll(unitDir, 0o750); err != nil {
 		return nil, fmt.Errorf("creating unit directory %s: %w", unitDir, err)
 	}
 
@@ -191,7 +191,7 @@ func (g *Generator) InstallIfChanged(name string, job *config.JobConfig, unitDir
 		return false, err
 	}
 
-	if err := os.MkdirAll(unitDir, 0o755); err != nil {
+	if err := os.MkdirAll(unitDir, 0o750); err != nil {
 		return false, fmt.Errorf("creating unit directory %s: %w", unitDir, err)
 	}
 
@@ -218,7 +218,7 @@ func (g *Generator) InstallIfChanged(name string, job *config.JobConfig, unitDir
 
 // unitFileChanged reports whether path does not match expected content.
 func unitFileChanged(path, expected string) bool {
-	current, err := os.ReadFile(path)
+	current, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		return true // treat missing file as changed
 	}
@@ -246,7 +246,7 @@ func (g *Generator) Remove(name, unitDir string) error {
 func (g *Generator) loadTemplate(name, embedded string) (string, error) {
 	if g.CustomTemplateDir != "" {
 		path := filepath.Join(g.CustomTemplateDir, name)
-		data, err := os.ReadFile(path)
+		data, err := os.ReadFile(path) //nolint:gosec
 		if err == nil {
 			return string(data), nil
 		}

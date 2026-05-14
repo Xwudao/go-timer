@@ -25,10 +25,10 @@ When config.yml or template files change, timerd automatically:
 
 Press Ctrl+C to stop the daemon.`,
 	Args: cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		cfgDir := config.DefaultConfigDir(isUserMode())
 
-		if err := os.MkdirAll(cfgDir, 0o755); err != nil {
+		if err := os.MkdirAll(cfgDir, 0o750); err != nil {
 			return fmt.Errorf("creating config directory: %w", err)
 		}
 

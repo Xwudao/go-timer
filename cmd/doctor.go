@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -20,7 +21,7 @@ var doctorCmd = &cobra.Command{
 	Short: "Check system compatibility and configuration",
 	Long:  "Runs a comprehensive series of environment checks and reports issues.",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		ui.Header("timerd doctor")
 		ui.Separator()
 
@@ -203,7 +204,8 @@ var doctorCmd = &cobra.Command{
 }
 
 func currentUsername() (string, error) {
-	out, err := exec.Command("id", "-un").Output()
+	cmd := exec.CommandContext(context.Background(), "id", "-un")
+	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
@@ -215,7 +217,7 @@ func fileReadable(path string) bool {
 	if err != nil {
 		return false
 	}
-	f.Close()
+	defer func() { _ = f.Close() }()
 	return true
 }
 

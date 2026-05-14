@@ -16,7 +16,7 @@ var editCmd = &cobra.Command{
 	Long: `Opens the timerd config file in your default editor ($EDITOR or vi).
 If a job name is provided it is shown as a hint — the whole config is opened.`,
 	Args: cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		cfgPath := configPath()
 
 		if _, err := os.Stat(cfgPath); os.IsNotExist(err) {

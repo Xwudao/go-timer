@@ -17,7 +17,7 @@ var exportCmd = &cobra.Command{
 	Short: "Export all generated unit files to a directory",
 	Long:  "Generates .service and .timer files for all jobs and writes them to the target directory.",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		cfg, ok := loadConfig()
 		if !ok {
 			return fmt.Errorf("could not load config")
@@ -33,7 +33,7 @@ var exportCmd = &cobra.Command{
 			dest = "./timerd-units"
 		}
 
-		if err := os.MkdirAll(dest, 0o755); err != nil {
+		if err := os.MkdirAll(dest, 0o750); err != nil {
 			return fmt.Errorf("creating export dir: %w", err)
 		}
 

@@ -34,7 +34,7 @@ func New(dir string, handler Handler) (*Watcher, error) {
 		return nil, err
 	}
 	if err := fw.Add(dir); err != nil {
-		fw.Close()
+		_ = fw.Close()
 		return nil, err
 	}
 	return &Watcher{dir: dir, handler: handler, fw: fw}, nil

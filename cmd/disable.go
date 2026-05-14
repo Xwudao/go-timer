@@ -12,7 +12,7 @@ var disableCmd = &cobra.Command{
 	Use:   "disable <name>",
 	Short: "Disable a timer (do not start on boot / login)",
 	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		name := resolveJobName(args[0])
 
 		cfg, ok := loadConfig()

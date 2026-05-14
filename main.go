@@ -1,3 +1,4 @@
+// Command timerd manages systemd timers via a YAML config.
 package main
 
 import "github.com/Xwudao/go-timer/cmd"

@@ -3,6 +3,7 @@ package systemd
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -70,7 +71,7 @@ func (m *Manager) run(args ...string) (string, error) {
 		return "", nil
 	}
 
-	cmd := exec.Command(full[0], full[1:]...) //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), full[0], full[1:]...) //nolint:gosec
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -90,7 +91,7 @@ func (m *Manager) runOutput(args ...string) (string, error) {
 		slog.Debug("executing", "cmd", strings.Join(full, " "))
 	}
 
-	cmd := exec.Command(full[0], full[1:]...) //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), full[0], full[1:]...) //nolint:gosec
 	out, err := cmd.CombinedOutput()
 	return string(out), err
 }
@@ -170,7 +171,7 @@ func (m *Manager) ShowProperties(unitName string) (map[string]string, error) {
 		slog.Debug("executing", "cmd", strings.Join(full, " "))
 	}
 
-	cmd := exec.Command(full[0], full[1:]...) //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), full[0], full[1:]...) //nolint:gosec
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("systemctl show %s: %w", unitName, err)
@@ -223,7 +224,7 @@ func (m *Manager) ListTimers() ([]TimerInfo, error) {
 	full := append([]string{"systemctl"}, m.baseArgs()...)
 	full = append(full, "list-timers", "--all", "--no-legend", "timerd-*")
 
-	cmd := exec.Command(full[0], full[1:]...) //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), full[0], full[1:]...) //nolint:gosec
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("listing timers: %w", err)
@@ -266,7 +267,7 @@ func (m *Manager) NextTrigger(name string) (string, error) {
 	full := append([]string{"systemctl"}, m.baseArgs()...)
 	full = append(full, "list-timers", "--all", "--no-legend", TimerFileName(name))
 
-	cmd := exec.Command(full[0], full[1:]...) //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), full[0], full[1:]...) //nolint:gosec
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("listing timer: %w", err)
@@ -310,7 +311,7 @@ func EnableLinger(username string) error {
 		}
 		username = u
 	}
-	cmd := exec.Command("loginctl", "enable-linger", username) //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), "loginctl", "enable-linger", username) //nolint:gosec
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("loginctl enable-linger: %w: %s", err, string(out))
 	}
@@ -412,7 +413,7 @@ func UnitDirPermissionsOK(unitDir string) bool {
 	if err := os.WriteFile(testFile, []byte{}, 0o600); err != nil {
 		return false
 	}
-	os.Remove(testFile)
+	_ = os.Remove(testFile)
 	return true
 }
 
@@ -424,7 +425,7 @@ func ListFailedUnits(userMode bool) []string {
 	}
 	args = append(args, "list-units", "--state=failed", "--no-legend", "--plain", "timerd-*")
 
-	cmd := exec.Command(args[0], args[1:]...) //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), args[0], args[1:]...) //nolint:gosec
 	out, err := cmd.Output()
 	if err != nil {
 		return nil
@@ -454,7 +455,7 @@ func parseUSecTime(s string) (time.Time, bool) {
 
 // IsUserModeAvailable reports whether systemctl --user works.
 func IsUserModeAvailable() bool {
-	cmd := exec.Command("systemctl", "--user", "is-system-running") //nolint:gosec
+	cmd := exec.CommandContext(context.Background(), "systemctl", "--user", "is-system-running") //nolint:gosec
 	err := cmd.Run()
 	// is-system-running exits 1 in degraded state but still works.
 	return err == nil || (cmd.ProcessState != nil && cmd.ProcessState.ExitCode() < 4)
@@ -466,7 +467,7 @@ func IsRoot() bool {
 }
 
 func currentUser() (string, error) {
-	cmd := exec.Command("id", "-un")
+	cmd := exec.CommandContext(context.Background(), "id", "-un")
 	out, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("getting current user: %w", err)

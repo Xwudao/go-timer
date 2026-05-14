@@ -17,7 +17,7 @@ var removeCmd = &cobra.Command{
 	Long: `Stops the timer, disables it, removes the generated unit files,
 and deletes the job from config.yml.`,
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		name := resolveJobName(args[0])
 
 		cfg, ok := loadConfig()

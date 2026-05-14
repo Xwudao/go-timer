@@ -1,3 +1,4 @@
+// Package errors provides error codes and wrapped error helpers for timerd.
 package errors
 
 import (

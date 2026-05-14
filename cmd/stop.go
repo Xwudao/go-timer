@@ -12,7 +12,7 @@ var stopCmd = &cobra.Command{
 	Use:   "stop <name>",
 	Short: "Stop the timer for a job",
 	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		name := resolveJobName(args[0])
 
 		cfg, ok := loadConfig()

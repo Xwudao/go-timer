@@ -13,7 +13,7 @@ var genCmd = &cobra.Command{
 	Short: "Generate unit files but do not install them",
 	Long:  "Prints the generated .service and .timer content to stdout. Does not write any files.",
 	Args:  cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		cfg, ok := loadConfig()
 		if !ok {
 			return fmt.Errorf("could not load config")

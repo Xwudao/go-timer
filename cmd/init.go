@@ -16,7 +16,7 @@ var initCmd = &cobra.Command{
 	Short: "Initialise the timerd config directory",
 	Long:  "Creates the config directory and a starter config.yml if they don't exist.",
 	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		cfgPath := configPath()
 		cfgDir := filepath.Dir(cfgPath)
 
@@ -25,13 +25,13 @@ var initCmd = &cobra.Command{
 			return nil
 		}
 
-		if err := os.MkdirAll(cfgDir, 0o755); err != nil {
+		if err := os.MkdirAll(cfgDir, 0o750); err != nil {
 			return fmt.Errorf("creating config dir %s: %w", cfgDir, err)
 		}
 
 		// Also create the systemd user unit directory.
 		ud := unitDir()
-		if err := os.MkdirAll(ud, 0o755); err != nil {
+		if err := os.MkdirAll(ud, 0o750); err != nil {
 			return fmt.Errorf("creating unit dir %s: %w", ud, err)
 		}
 

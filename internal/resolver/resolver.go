@@ -69,8 +69,8 @@ func CanonicalizeWorkDir(dir string) (string, error) {
 		return "", fmt.Errorf("resolving workdir %q: %w", dir, err)
 	}
 
-	if real, err := filepath.EvalSymlinks(abs); err == nil {
-		return real, nil
+	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
+		return resolved, nil
 	}
 	return abs, nil
 }

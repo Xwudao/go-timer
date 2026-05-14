@@ -27,7 +27,7 @@ If the job is already registered, the name or filename both work:
   timerd start lz-gen-tag
   timerd start lz-gen-tag.sh`,
 	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		arg := args[0]
 		name := resolveJobName(arg)
 

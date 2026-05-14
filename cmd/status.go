@@ -13,7 +13,7 @@ var statusCmd = &cobra.Command{
 	Use:   "status [name]",
 	Short: "Show systemd status for a job (or all jobs)",
 	Args:  cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, args []string) error {
 		cfg, ok := loadConfig()
 		if !ok {
 			return fmt.Errorf("could not load config")
@@ -28,7 +28,7 @@ var statusCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("getting status: %w", err)
 			}
-			fmt.Fprintln(os.Stdout, out)
+			_, _ = fmt.Fprintln(os.Stdout, out)
 			return nil
 		}
 
@@ -41,7 +41,7 @@ var statusCmd = &cobra.Command{
 		for name := range cfg.Jobs {
 			ui.Header(fmt.Sprintf("── %s ──────────────────────────────", name))
 			out, _ := mgr.Status(name)
-			fmt.Fprintln(os.Stdout, out)
+			_, _ = fmt.Fprintln(os.Stdout, out)
 		}
 		return nil
 	},

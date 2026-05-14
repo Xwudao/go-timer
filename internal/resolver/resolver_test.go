@@ -16,7 +16,7 @@ func TestResolveExecutable_AbsolutePath(t *testing.T) {
 	// Create a real temp file so the path is absolute.
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "mybinary")
-	if err := os.WriteFile(bin, []byte("#!/bin/sh\n"), 0o755); err != nil {
+	if err := os.WriteFile(bin, []byte("#!/bin/sh\n"), 0o700); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
 
@@ -67,7 +67,7 @@ func TestResolveExecutable_TildeSlash(t *testing.T) {
 	dir := t.TempDir()
 	// Check if dir is under home (macOS puts temp dirs elsewhere on some versions).
 	bin := filepath.Join(dir, "tildetest")
-	if err := os.WriteFile(bin, []byte{}, 0o755); err != nil {
+	if err := os.WriteFile(bin, []byte{}, 0o700); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
 

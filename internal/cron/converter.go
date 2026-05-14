@@ -90,7 +90,7 @@ func convertFiveField(minute, hour, dom, month, dow string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("day-of-month: %w", err)
 	}
-	sb.WriteString(fmt.Sprintf("*-%s-%s ", monthStr, domStr))
+	fmt.Fprintf(&sb, "*-%s-%s ", monthStr, domStr)
 
 	// Time component: HOUR:MIN:00
 	hourStr, err := convertTimeField(hour, 0, 23)
@@ -101,31 +101,31 @@ func convertFiveField(minute, hour, dom, month, dow string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("minute: %w", err)
 	}
-	sb.WriteString(fmt.Sprintf("%s:%s:00", hourStr, minStr))
+	fmt.Fprintf(&sb, "%s:%s:00", hourStr, minStr)
 
 	return sb.String(), nil
 }
 
 // convertDateField converts a cron field used in dates (month, dom).
 // Wildcard returns "*", plain numbers are zero-padded to 2 digits.
-func convertDateField(field string, min, max int) (string, error) {
+func convertDateField(field string, lo, hi int) (string, error) {
 	if field == "*" {
 		return "*", nil
 	}
-	return convertField(field, min, max, true)
+	return convertField(field, lo, hi, true)
 }
 
 // convertTimeField converts a cron field used in times (hour, minute).
 // Wildcard returns "*", plain numbers are zero-padded to 2 digits.
-func convertTimeField(field string, min, max int) (string, error) {
+func convertTimeField(field string, lo, hi int) (string, error) {
 	if field == "*" {
 		return "*", nil
 	}
-	return convertField(field, min, max, true)
+	return convertField(field, lo, hi, true)
 }
 
 // convertField is the generic field converter supporting */n, n-m, n,m,o and plain numbers.
-func convertField(field string, min, max int, pad bool) (string, error) {
+func convertField(field string, lo, hi int, pad bool) (string, error) {
 	// Step: */n  or  start/n
 	if before, after, ok := strings.Cut(field, "/"); ok {
 		base := before
@@ -150,7 +150,7 @@ func convertField(field string, min, max int, pad bool) (string, error) {
 		parts := strings.Split(field, ",")
 		results := make([]string, 0, len(parts))
 		for _, p := range parts {
-			r, err := convertField(p, min, max, pad)
+			r, err := convertField(p, lo, hi, pad)
 			if err != nil {
 				return "", err
 			}
@@ -178,8 +178,8 @@ func convertField(field string, min, max int, pad bool) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid value %q", field)
 	}
-	_ = min
-	_ = max
+	_ = lo
+	_ = hi
 	if pad {
 		return fmt.Sprintf("%02d", n), nil
 	}

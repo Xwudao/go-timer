@@ -17,7 +17,7 @@ var listCmd = &cobra.Command{
 	Aliases: []string{"ls"},
 	Short:   "List all configured jobs and their status",
 	Args:    cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		cfg, ok := loadConfig()
 		if !ok {
 			return fmt.Errorf("could not load config")
