@@ -27,6 +27,14 @@ type JobConfig struct {
 	Wants       []string          `yaml:"wants,omitempty"`
 	Requires    []string          `yaml:"requires,omitempty"`
 	Enabled     bool              `yaml:"enabled,omitempty"`
+
+	// Shell wraps the command in bash -lc '...' so that shell constructs
+	// (pipes, &&, variable expansion) work inside the systemd unit.
+	Shell bool `yaml:"shell,omitempty"`
+
+	// InheritEnv controls whether the current process PATH is injected into
+	// the unit's Environment= directive. Nil means true (opt-in by default).
+	InheritEnv *bool `yaml:"inherit_env,omitempty"`
 }
 
 // Config is the top-level configuration structure.

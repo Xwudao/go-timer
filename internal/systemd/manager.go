@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -31,6 +32,8 @@ type JobStatus struct {
 	TimerState      string
 	LastTrigger     string
 	NextTrigger     string
+	NextTriggerTime time.Time
+	LastTriggerTime time.Time
 }
 
 // Manager wraps systemctl to manage timerd units.
@@ -177,11 +180,11 @@ func (m *Manager) ShowProperties(unitName string) (map[string]string, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(out))
 	for scanner.Scan() {
 		line := scanner.Text()
-		idx := strings.IndexByte(line, '=')
-		if idx < 0 {
+		before, after, ok := strings.Cut(line, "=")
+		if !ok {
 			continue
 		}
-		props[line[:idx]] = line[idx+1:]
+		props[before] = after
 	}
 	return props, nil
 }
@@ -205,6 +208,12 @@ func (m *Manager) GetJobStatus(name string) (*JobStatus, error) {
 		js.TimerState = tmrProps["LoadState"]
 		js.NextTrigger = tmrProps["NextElapseUSecRealtime"]
 		js.LastTrigger = tmrProps["LastTriggerUSec"]
+		if t, ok := parseUSecTime(js.NextTrigger); ok {
+			js.NextTriggerTime = t
+		}
+		if t, ok := parseUSecTime(js.LastTrigger); ok {
+			js.LastTriggerTime = t
+		}
 	}
 	return js, nil
 }
@@ -263,8 +272,8 @@ func (m *Manager) NextTrigger(name string) (string, error) {
 		return "", fmt.Errorf("listing timer: %w", err)
 	}
 
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(strings.TrimSpace(string(out)), "\n")
+	for line := range lines {
 		if strings.Contains(line, TimerFileName(name)) {
 			fields := strings.Fields(line)
 			// Format: NEXT LEFT LAST PASSED UNIT ACTIVATES
@@ -346,6 +355,101 @@ func IsWSL() bool {
 	}
 	lower := strings.ToLower(string(data))
 	return strings.Contains(lower, "microsoft") || strings.Contains(lower, "wsl")
+}
+
+// OsRelease holds key fields parsed from /etc/os-release.
+type OsRelease struct {
+	Name    string
+	ID      string
+	Version string
+}
+
+// ReadOsRelease parses /etc/os-release and returns the relevant fields.
+// Returns a struct with Name="Unknown" when the file cannot be read.
+func ReadOsRelease() OsRelease {
+	data, err := os.ReadFile("/etc/os-release")
+	if err != nil {
+		return OsRelease{Name: "Unknown"}
+	}
+	r := OsRelease{}
+	for line := range strings.SplitSeq(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		kv := strings.SplitN(line, "=", 2)
+		if len(kv) != 2 {
+			continue
+		}
+		val := strings.Trim(kv[1], `"`)
+		switch kv[0] {
+		case "NAME":
+			r.Name = val
+		case "ID":
+			r.ID = val
+		case "VERSION_ID":
+			r.Version = val
+		}
+	}
+	if r.Name == "" {
+		r.Name = "Unknown"
+	}
+	return r
+}
+
+// IsDBusUserSessionAvailable reports whether the systemd user D-Bus session
+// socket exists and is accessible.
+func IsDBusUserSessionAvailable() bool {
+	uid := strconv.Itoa(os.Getuid())
+	socket := fmt.Sprintf("/run/user/%s/bus", uid)
+	_, err := os.Stat(socket)
+	return err == nil
+}
+
+// UnitDirPermissionsOK reports whether the unit directory is readable and writable.
+func UnitDirPermissionsOK(unitDir string) bool {
+	if _, err := os.Stat(unitDir); err != nil {
+		return false
+	}
+	testFile := unitDir + "/.timerd_perm_check"
+	if err := os.WriteFile(testFile, []byte{}, 0o600); err != nil {
+		return false
+	}
+	os.Remove(testFile)
+	return true
+}
+
+// ListFailedUnits returns a list of failed unit names matching a pattern.
+func ListFailedUnits(userMode bool) []string {
+	args := []string{"systemctl"}
+	if userMode {
+		args = append(args, "--user")
+	}
+	args = append(args, "list-units", "--state=failed", "--no-legend", "--plain", "timerd-*")
+
+	cmd := exec.Command(args[0], args[1:]...) //nolint:gosec
+	out, err := cmd.Output()
+	if err != nil {
+		return nil
+	}
+
+	var units []string
+	for line := range strings.SplitSeq(strings.TrimSpace(string(out)), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) > 0 && strings.HasSuffix(fields[0], ".service") {
+			units = append(units, fields[0])
+		}
+	}
+	return units
+}
+
+// parseUSecTime converts a systemd microsecond-since-epoch string to time.Time.
+func parseUSecTime(s string) (time.Time, bool) {
+	if s == "" || s == "0" {
+		return time.Time{}, false
+	}
+	us, err := strconv.ParseUint(s, 10, 64)
+	if err != nil || us == 0 {
+		return time.Time{}, false
+	}
+	return time.Unix(int64(us/1_000_000), int64(us%1_000_000)*1000).Local(), true
 }
 
 // IsUserModeAvailable reports whether systemctl --user works.

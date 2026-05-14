@@ -31,9 +31,9 @@ var genCmd = &cobra.Command{
 				return fmt.Errorf("generating units for %q: %w", name, err)
 			}
 			ui.Header(fmt.Sprintf("── %s ──", pair.ServiceName))
-			ui.Print(pair.Service)
+			ui.Print("%s", pair.Service)
 			ui.Header(fmt.Sprintf("── %s ──", pair.TimerName))
-			ui.Print(pair.Timer)
+			ui.Print("%s", pair.Timer)
 			return nil
 		}
 

@@ -7,18 +7,30 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
+
+	"github.com/Xwudao/go-timer/internal/systemd"
 )
 
 var (
-	logsFollow bool
-	logsLines  int
+	logsFollow  bool
+	logsLines   int
+	logsSince   string
+	logsTimer   bool
+	logsService bool
 )
 
 var logsCmd = &cobra.Command{
 	Use:   "logs <name>",
 	Short: "Show journal logs for a job",
-	Long:  "Equivalent to: journalctl -u timerd-<name>.service [--follow] [-n N]",
-	Args:  cobra.ExactArgs(1),
+	Long: `Show systemd journal logs for a job's service (default) or timer unit.
+
+Examples:
+  timerd logs backup              # last 50 lines
+  timerd logs backup -f           # follow
+  timerd logs backup -n 100       # last 100 lines
+  timerd logs backup --since "1h" # last hour
+  timerd logs backup --timer      # timer unit logs instead of service`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := resolveJobName(args[0])
 
@@ -28,7 +40,14 @@ var logsCmd = &cobra.Command{
 		}
 		mustJob(cfg, name) // validate name
 
-		unit := "timerd-" + name + ".service"
+		// Decide which unit to follow.
+		var unit string
+		switch {
+		case logsTimer:
+			unit = systemd.TimerFileName(name)
+		default: // logsService or default
+			unit = systemd.ServiceFileName(name)
+		}
 
 		jArgs := []string{}
 		if isUserMode() {
@@ -36,6 +55,10 @@ var logsCmd = &cobra.Command{
 		}
 		jArgs = append(jArgs, "-u", unit)
 		jArgs = append(jArgs, "-n", strconv.Itoa(logsLines))
+
+		if logsSince != "" {
+			jArgs = append(jArgs, "--since", logsSince)
+		}
 		if logsFollow {
 			jArgs = append(jArgs, "--follow")
 		}
@@ -47,7 +70,7 @@ var logsCmd = &cobra.Command{
 		c.Stdin = os.Stdin
 
 		if err := c.Run(); err != nil {
-			// journalctl exits non-zero on empty log or missing unit; don't treat as fatal.
+			// journalctl exits non-zero on empty log or missing unit; treat as soft error.
 			return nil
 		}
 		return nil
@@ -55,7 +78,10 @@ var logsCmd = &cobra.Command{
 }
 
 func init() {
-	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, "Follow log output")
+	logsCmd.Flags().BoolVarP(&logsFollow, "follow", "f", false, "Follow log output (like tail -f)")
 	logsCmd.Flags().IntVarP(&logsLines, "lines", "n", 50, "Number of recent lines to show")
+	logsCmd.Flags().StringVar(&logsSince, "since", "", `Show logs since this time, e.g. "1h", "2024-01-01", "yesterday"`)
+	logsCmd.Flags().BoolVar(&logsTimer, "timer", false, "Show timer unit logs instead of service logs")
+	logsCmd.Flags().BoolVar(&logsService, "service", false, "Show service unit logs (default)")
 	rootCmd.AddCommand(logsCmd)
 }

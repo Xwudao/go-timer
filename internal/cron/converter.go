@@ -127,9 +127,9 @@ func convertTimeField(field string, min, max int) (string, error) {
 // convertField is the generic field converter supporting */n, n-m, n,m,o and plain numbers.
 func convertField(field string, min, max int, pad bool) (string, error) {
 	// Step: */n  or  start/n
-	if idx := strings.Index(field, "/"); idx != -1 {
-		base := field[:idx]
-		stepStr := field[idx+1:]
+	if before, after, ok := strings.Cut(field, "/"); ok {
+		base := before
+		stepStr := after
 		step, err := strconv.Atoi(stepStr)
 		if err != nil || step <= 0 {
 			return "", fmt.Errorf("invalid step value %q", stepStr)

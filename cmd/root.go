@@ -131,14 +131,14 @@ func jobNames(cfg *config.Config) string {
 }
 
 func joinStrings(ss []string, sep string) string {
-	result := ""
+	var result strings.Builder
 	for i, s := range ss {
 		if i > 0 {
-			result += sep
+			result.WriteString(sep)
 		}
-		result += s
+		result.WriteString(s)
 	}
-	return result
+	return result.String()
 }
 
 // scriptExts is the list of extensions stripped when resolving a job name from a file path.
@@ -167,8 +167,8 @@ func looksLikeFilePath(arg string) bool {
 func resolveJobName(arg string) string {
 	base := filepath.Base(arg)
 	for _, ext := range scriptExts {
-		if strings.HasSuffix(base, ext) {
-			base = strings.TrimSuffix(base, ext)
+		if before, ok := strings.CutSuffix(base, ext); ok {
+			base = before
 			break
 		}
 	}

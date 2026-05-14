@@ -12,6 +12,7 @@ import (
 
 	"github.com/Xwudao/go-timer/internal/config"
 	"github.com/Xwudao/go-timer/internal/cron"
+	"github.com/Xwudao/go-timer/internal/resolver"
 )
 
 //go:embed service.tmpl
@@ -86,7 +87,26 @@ func (g *Generator) Generate(name string, job *config.JobConfig, userMode bool) 
 		return nil, fmt.Errorf("converting schedule: %w", err)
 	}
 
-	execStart := buildExecStart(job)
+	execStart, err := resolver.BuildExecStart(job)
+	if err != nil {
+		return nil, fmt.Errorf("resolving command for %q: %w", name, err)
+	}
+
+	workDir, err := resolver.CanonicalizeWorkDir(job.WorkDir)
+	if err != nil {
+		return nil, fmt.Errorf("canonicalising workdir for %q: %w", name, err)
+	}
+
+	// Build merged env: start with PATH injection (if enabled), then apply
+	// user-defined overrides so explicit values always win.
+	env := job.Env
+	if resolver.ShouldInheritEnv(job) {
+		if p := resolver.InheritedPATH(); p != "" {
+			base := map[string]string{"PATH": p}
+			env = resolver.MergedEnv(base, job.Env)
+		}
+	}
+
 	description := job.Description
 	if description == "" {
 		description = fmt.Sprintf("timerd job: %s", name)
@@ -94,9 +114,9 @@ func (g *Generator) Generate(name string, job *config.JobConfig, userMode bool) 
 
 	serviceData := &ServiceData{
 		Description: description,
-		WorkDir:     job.WorkDir,
+		WorkDir:     workDir,
 		ExecStart:   execStart,
-		Env:         job.Env,
+		Env:         env,
 		Restart:     job.Restart,
 		RestartSec:  job.RestartSec,
 		Timeout:     job.Timeout,
@@ -162,6 +182,49 @@ func (g *Generator) Install(name string, job *config.JobConfig, unitDir string, 
 	return pair, nil
 }
 
+// InstallIfChanged generates unit files and writes them only when the content
+// on disk differs from what would be generated. Returns true when at least one
+// file was (re-)written, false when everything was already up to date.
+func (g *Generator) InstallIfChanged(name string, job *config.JobConfig, unitDir string, userMode bool) (bool, error) {
+	pair, err := g.Generate(name, job, userMode)
+	if err != nil {
+		return false, err
+	}
+
+	if err := os.MkdirAll(unitDir, 0o755); err != nil {
+		return false, fmt.Errorf("creating unit directory %s: %w", unitDir, err)
+	}
+
+	changed := false
+
+	svcPath := filepath.Join(unitDir, pair.ServiceName)
+	if unitFileChanged(svcPath, pair.Service) {
+		if err := os.WriteFile(svcPath, []byte(pair.Service), 0o644); err != nil {
+			return false, fmt.Errorf("writing service unit: %w", err)
+		}
+		changed = true
+	}
+
+	tmrPath := filepath.Join(unitDir, pair.TimerName)
+	if unitFileChanged(tmrPath, pair.Timer) {
+		if err := os.WriteFile(tmrPath, []byte(pair.Timer), 0o644); err != nil {
+			return false, fmt.Errorf("writing timer unit: %w", err)
+		}
+		changed = true
+	}
+
+	return changed, nil
+}
+
+// unitFileChanged reports whether path does not match expected content.
+func unitFileChanged(path, expected string) bool {
+	current, err := os.ReadFile(path)
+	if err != nil {
+		return true // treat missing file as changed
+	}
+	return string(current) != expected
+}
+
 // Remove deletes unit files from the target directory.
 func (g *Generator) Remove(name, unitDir string) error {
 	servicePath := filepath.Join(unitDir, ServiceFileName(name))
@@ -193,7 +256,7 @@ func (g *Generator) loadTemplate(name, embedded string) (string, error) {
 }
 
 // renderTemplate executes a template string with the given data.
-func renderTemplate(tmplStr string, data interface{}) (string, error) {
+func renderTemplate(tmplStr string, data any) (string, error) {
 	tmpl, err := template.New("unit").Parse(tmplStr)
 	if err != nil {
 		return "", fmt.Errorf("parsing template: %w", err)
@@ -222,22 +285,6 @@ func normaliseBlankLines(s string) string {
 		prev = blank
 	}
 	return strings.Join(out, "\n")
-}
-
-// buildExecStart assembles the ExecStart value from command + args.
-func buildExecStart(job *config.JobConfig) string {
-	if len(job.Args) == 0 {
-		return job.Command
-	}
-	quoted := make([]string, len(job.Args))
-	for i, a := range job.Args {
-		if strings.ContainsAny(a, " \t") {
-			quoted[i] = fmt.Sprintf("%q", a)
-		} else {
-			quoted[i] = a
-		}
-	}
-	return job.Command + " " + strings.Join(quoted, " ")
 }
 
 // scheduleToOnCalendar converts a schedule string (cron or systemd keyword)

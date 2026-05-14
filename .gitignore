@@ -6,6 +6,8 @@ dist/
 *.so
 *.dylib
 
+timerd*
+
 # Go test and coverage artifacts
 *.test
 *.out

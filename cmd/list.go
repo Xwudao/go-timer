@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -42,7 +43,7 @@ var listCmd = &cobra.Command{
 
 			status, _ := mgr.GetJobStatus(name)
 
-			active := ""
+			active := color.New(color.FgHiBlack).Sprint("○ inactive")
 			if status != nil {
 				active = formatActiveState(status.TimerActive, status.ServiceSubState)
 			}
@@ -52,12 +53,18 @@ var listCmd = &cobra.Command{
 				enabled = color.New(color.FgGreen).Sprint("yes")
 			}
 
-			desc := job.Description
-			if desc == "" {
-				desc = color.New(color.FgHiBlack).Sprint("—")
-			}
-			if len(desc) > 30 {
-				desc = desc[:27] + "…"
+			nextStr := color.New(color.FgHiBlack).Sprint("—")
+			lastStr := color.New(color.FgHiBlack).Sprint("—")
+
+			if status != nil {
+				if !status.NextTriggerTime.IsZero() {
+					left := time.Until(status.NextTriggerTime)
+					nextStr = formatDuration(left)
+				}
+				if !status.LastTriggerTime.IsZero() {
+					ago := time.Since(status.LastTriggerTime)
+					lastStr = formatDuration(ago) + " ago"
+				}
 			}
 
 			rows = append(rows, []string{
@@ -65,18 +72,19 @@ var listCmd = &cobra.Command{
 				active,
 				enabled,
 				truncate(job.Schedule, 22),
-				desc,
+				nextStr,
+				lastStr,
 			})
 		}
 
 		ui.Print("")
 		ui.Table(
-			[]string{"Name", "Status", "Enabled", "Schedule", "Description"},
+			[]string{"Name", "Status", "Enabled", "Schedule", "Next", "Last"},
 			rows,
 		)
 		ui.Print("")
-		ui.Dim("  config: %s", configPath())
-		ui.Dim("  mode  : %s", modeLabel())
+		ui.Dim("  config : %s", configPath())
+		ui.Dim("  mode   : %s", modeLabel())
 		return nil
 	},
 }
