@@ -54,6 +54,13 @@ cd go-timer
 make install   # installs to /usr/local/bin/timerd
 ```
 
+Or build the binary yourself and let `timerd` install the currently running executable:
+
+```bash
+go build -o timerd .
+./timerd install
+```
+
 ### Requirements
 
 - Linux with **systemd** (Ubuntu 20.04+, Debian 11+, Arch, Fedora, CentOS Stream 8+)
@@ -95,6 +102,7 @@ timerd reload
 | Command                 | Description                                       |
 | ----------------------- | ------------------------------------------------- |
 | `timerd init`           | Create config directory and starter config.yml    |
+| `timerd install`        | Move the current binary into `/usr/local/bin`     |
 | `timerd add <name>`     | Interactive wizard to add a job                   |
 | `timerd edit [name]`    | Open config.yml in `$EDITOR`                      |
 | `timerd remove <name>`  | Stop, disable, remove unit files and config entry |
